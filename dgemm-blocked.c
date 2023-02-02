@@ -2,10 +2,25 @@
 #include <string.h>
 #include <stdio.h>
 
+// compile tools
+#pragma GCC optimize("Ofast, no-stack-protector")
+// #pragma GCC optimize("O3")
+#pragma GCC optimize("unroll-loops")
+#pragma GCC optimize("peel-loops")
+#pragma GCC optimize("inline")
+#pragma GCC optimize("-falign-jumps")
+#pragma GCC optimize("-falign-loops")
+
+#pragma GCC target("avx")
+#pragma GCC target("avx2")
+#pragma GCC diagnostic error "-fwhole-program"
+#pragma GCC diagnostic error "-fcse-skip-blocks"
+#pragma GCC diagnostic error "-funsafe-loop-optimizations"
+
 const char* dgemm_desc = "Simple blocked dgemm.";
 
-#define BLOCK_L1 256
-#define BLOCK_L2 512
+#define BLOCK_L1 256 
+#define BLOCK_L2 512 // 512 1024 etc.
 
 #define min(a,b) (((a)<(b))?(a):(b))
 
@@ -40,7 +55,7 @@ static inline void calc_16(int lda, int K, double* a, double* b, double* c)
   {
     ac0 = _mm256_loadu_pd(a);
     a += 4;
-
+    
     br00 = _mm256_broadcast_sd(b++);
     br01 = _mm256_broadcast_sd(b++);
     br02 = _mm256_broadcast_sd(b++);
@@ -95,7 +110,6 @@ static inline void calc_16(int lda, int K, double* a, double* b, double* c)
 
 static inline void copy_a (int lda, const int K, double* a_src, double* a_dst) 
 {
-  /* For each 4xK block-row of A */
   for (int i = 0; i < K; ++i) 
   {
     *a_dst++ = a_src[0];
@@ -120,6 +134,7 @@ static inline void copy_b (int lda, const int K, double* b_src, double* b_dst)
     *b_dst++ = *b_ptr3++;
   }
 }
+
 /* This auxiliary subroutine performs a smaller dgemm operation
  *  C := C + A * B
  * where C is M-by-N, A is M-by-K, and B is K-by-N. */
